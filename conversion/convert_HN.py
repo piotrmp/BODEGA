@@ -66,11 +66,11 @@ for subset in subset_dict:
     articles_dict = {}
     date = '20181212' if subset == 'test' else '20181122'
     every_n = EVERY_N_IN_TRAINING if subset == 'training' else 1
-    label_path = corpusPath / ('ground-truth-' + subset + '-bypublisher-' + date + '.xml')
+    label_path = corpus_path / ('ground-truth-' + subset + '-bypublisher-' + date + '.xml')
     label_handler = LabelHandler(every_n)
     with open(label_path) as f:
         xml.sax.parse(f, label_handler)
-    content_path = corpusPath / ('articles-' + subset + '-bypublisher-' + date + '.xml')
+    content_path = corpus_path / ('articles-' + subset + '-bypublisher-' + date + '.xml')
     content_handler = ArticleHandler(every_n)
     with open(content_path) as f:
         xml.sax.parse(f, content_handler)
