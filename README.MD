@@ -104,13 +104,14 @@ following arguments:
 - attacker procedure (`PWWS`, `SCPN`, `TextFooler`, `DeepWordBug`, `GAN`, `Genetic`, `PSO`, `BERTattack` and
   `BAE` are currently supported)
 - victim type (`BiLSTM` or `BERT`),
+- path to the folder containing the TSV files with training data,
 - victim model path.
 
 For example, we can test the robustness of victim model generated in the previous step against BERattack in the
 following way:
 
 ```commandline
-python ./runs/attack.py PR2 true BERTattack BiLSTM ~/Downloads/BODEGA/bilstm.pth 
+python ./runs/attack.py PR2 true BERTattack BiLSTM ~/Downloads/BODEGA ~/Downloads/BODEGA/bilstm.pth 
 ```
 
 At the end you should see the results as follows:

@@ -21,13 +21,17 @@ targeted = False
 attack = 'BERTattack'
 victim_model = 'BiLSTM'
 out_dir = None
-if len(sys.argv) >= 6:
+data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
+model_path = pathlib.Path.home() / 'data' / 'BODEGA' / task / (victim_model + '-512.pth')
+if len(sys.argv) >= 7:
     task = sys.argv[1]
     targeted = (sys.argv[2].lower() == 'true')
     attack = sys.argv[3]
     victim_model = sys.argv[4]
-    if len(sys.argv) == 7:
-        out_dir = pathlib.Path(sys.argv[5])
+    data_path = pathlib.Path(sys.argv[5]) / task
+    model_path = pathlib.Path(sys.argv[6])
+    if len(sys.argv) == 8:
+        out_dir = pathlib.Path(sys.argv[7])
 
 using_TF = (attack in ['TextFooler', 'BAE'])
 FILE_NAME = 'results_' + task + '_' + str(targeted) + '_' + attack + '_' + victim_model + '.txt'
@@ -37,8 +41,6 @@ if out_dir and (out_dir / FILE_NAME).exists():
 
 # Prepare task data
 with_pairs = (task == 'FC')
-data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
-out_path = pathlib.Path.home() / 'data' / 'BODEGA' / task / (victim_model + '-512.pth')
 
 # Choose device
 print("Setting up the device...")
@@ -61,9 +63,9 @@ else:
 # Prepare victim
 print("Loading up victim model...")
 if victim_model == 'BERT':
-    victim = VictimBERT(out_path, task, victim_device)
+    victim = VictimBERT(model_path, task, victim_device)
 elif victim_model == 'BiLSTM':
-    victim = VictimBiLSTM(out_path, task, victim_device)
+    victim = VictimBiLSTM(model_path, task, victim_device)
 
 # Load data
 print("Loading data...")
