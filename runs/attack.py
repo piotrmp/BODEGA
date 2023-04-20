@@ -122,13 +122,13 @@ with no_ssl_verify():
 # Run the attack
 print("Evaluating the attack...")
 scorer = BODEGAScore(victim_device)
-
-attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
-    scorer#, OpenAttack.metric.EditDistance()
-])
-start = time.time()
-summary = attack_eval.eval(dataset, visualize=True, progress_bar=False)
-end = time.time()
+with no_ssl_verify():
+    attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
+        scorer#, OpenAttack.metric.EditDistance()
+    ])
+    start = time.time()
+    summary = attack_eval.eval(dataset, visualize=True, progress_bar=False)
+    end = time.time()
 attack_time = end - start
 attacker = None
 
