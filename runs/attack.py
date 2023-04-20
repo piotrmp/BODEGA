@@ -28,7 +28,7 @@ if len(sys.argv) >= 7:
     targeted = (sys.argv[2].lower() == 'true')
     attack = sys.argv[3]
     victim_model = sys.argv[4]
-    data_path = pathlib.Path(sys.argv[5]) / task
+    data_path = pathlib.Path(sys.argv[5])
     model_path = pathlib.Path(sys.argv[6])
     if len(sys.argv) == 8:
         out_dir = pathlib.Path(sys.argv[7])
