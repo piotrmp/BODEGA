@@ -10,6 +10,7 @@ from datasets import Dataset
 
 from metrics.BODEGAScore import BODEGAScore
 from utils.data_mappings import dataset_mapping, dataset_mapping_pairs, SEPARATOR_CHAR
+from utils.no_ssl_verify import no_ssl_verify
 from victims.bert import VictimBERT, readfromfile_generator
 from victims.bilstm import VictimBiLSTM
 from victims.unk_fix_wrapper import UNK_TEXT
@@ -92,29 +93,31 @@ print("Subset size: " + str(len(dataset)))
 # Order for PR: DeepWordBug TextFooler PWWS BERTattack PSO BAE SCPN Genetic
 print("Setting up the attacker...")
 filter_words = OpenAttack.attack_assist.filter_words.get_default_filter_words('english') + [SEPARATOR_CHAR]
-if attack == 'PWWS':
-    attacker = OpenAttack.attackers.PWWSAttacker(token_unk=UNK_TEXT, lang='english', filter_words=filter_words)
-elif attack == 'SCPN':
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    attacker = OpenAttack.attackers.SCPNAttacker(device=attacker_device)
-elif attack == 'TextFooler':
-    attacker = OpenAttack.attackers.TextFoolerAttacker(token_unk=UNK_TEXT, lang='english', filter_words=filter_words)
-elif attack == 'DeepWordBug':
-    attacker = OpenAttack.attackers.DeepWordBugAttacker(token_unk=UNK_TEXT)
-elif attack == 'VIPER':
-    attacker = OpenAttack.attackers.VIPERAttacker()
-elif attack == 'GAN':
-    attacker = OpenAttack.attackers.GANAttacker()
-elif attack == 'Genetic':
-    attacker = OpenAttack.attackers.GeneticAttacker(lang='english', filter_words=filter_words)
-elif attack == 'PSO':
-    attacker = OpenAttack.attackers.PSOAttacker(lang='english', filter_words=filter_words)
-elif attack == 'BERTattack':
-    attacker = OpenAttack.attackers.BERTAttacker(filter_words=filter_words, use_bpe=False, device=attacker_device)
-elif attack == 'BAE':
-    attacker = OpenAttack.attackers.BAEAttacker(device=attacker_device, filter_words=filter_words)
-else:
-    attacker = None
+# Necessary to bypass the outdated SSL certifiacte on the OpenAttack servers
+with no_ssl_verify():
+    if attack == 'PWWS':
+        attacker = OpenAttack.attackers.PWWSAttacker(token_unk=UNK_TEXT, lang='english', filter_words=filter_words)
+    elif attack == 'SCPN':
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+        attacker = OpenAttack.attackers.SCPNAttacker(device=attacker_device)
+    elif attack == 'TextFooler':
+        attacker = OpenAttack.attackers.TextFoolerAttacker(token_unk=UNK_TEXT, lang='english', filter_words=filter_words)
+    elif attack == 'DeepWordBug':
+        attacker = OpenAttack.attackers.DeepWordBugAttacker(token_unk=UNK_TEXT)
+    elif attack == 'VIPER':
+        attacker = OpenAttack.attackers.VIPERAttacker()
+    elif attack == 'GAN':
+        attacker = OpenAttack.attackers.GANAttacker()
+    elif attack == 'Genetic':
+        attacker = OpenAttack.attackers.GeneticAttacker(lang='english', filter_words=filter_words)
+    elif attack == 'PSO':
+        attacker = OpenAttack.attackers.PSOAttacker(lang='english', filter_words=filter_words)
+    elif attack == 'BERTattack':
+        attacker = OpenAttack.attackers.BERTAttacker(filter_words=filter_words, use_bpe=False, device=attacker_device)
+    elif attack == 'BAE':
+        attacker = OpenAttack.attackers.BAEAttacker(device=attacker_device, filter_words=filter_words)
+    else:
+        attacker = None
 
 # Run the attack
 print("Evaluating the attack...")
