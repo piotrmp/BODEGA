@@ -51,7 +51,6 @@ class BODEGAScore(OpenAttack.AttackMetric):
             if promise.s2 is None:
                 # This happens if attacker gives no output or an output that doesn't succeed in changing the decision
                 B_scores.append(0.0)
-                B2_scores.append(0.0)
                 successes.append(0.0)
             else:
                 normalised_s1 = self.normalise_for_lev(promise.s1)
