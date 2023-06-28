@@ -3,6 +3,8 @@ import os
 import pathlib
 import sys
 import time
+import random
+import numpy as np
 
 import OpenAttack
 import torch
@@ -13,11 +15,17 @@ from utils.data_mappings import dataset_mapping, dataset_mapping_pairs, SEPARATO
 from utils.no_ssl_verify import no_ssl_verify
 from victims.bert import VictimBERT, readfromfile_generator
 from victims.bilstm import VictimBiLSTM
+from victims.caching import VictimCache
 from victims.unk_fix_wrapper import UNK_TEXT
+
+# Attempt at determinism
+random.seed(10)
+torch.manual_seed(10)
+np.random.seed(0)
 
 # Running variables
 print("Preparing the environment...")
-task = 'PR2'
+task = 'HN'
 targeted = False
 attack = 'BERTattack'
 victim_model = 'BiLSTM'
@@ -49,12 +57,13 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:100"
 if using_TF:
     # Disable GPU usage by TF to avoid memory conflicts
     import tensorflow as tf
+    
     tf.config.set_visible_devices(devices=[], device_type='GPU')
 
 if torch.cuda.is_available():
     victim_device = torch.device("cuda")
     attacker_device = torch.device("cuda")
-#elif torch.backends.mps.is_available():
+# elif torch.backends.mps.is_available():
 #    victim_device = torch.device('mps') if victim_model!= 'BiLSTM' else torch.device('cpu')
 #    attacker_device = torch.device('mps') if attack!= 'BERTattack' else torch.device('cpu')
 else:
@@ -64,9 +73,9 @@ else:
 # Prepare victim
 print("Loading up victim model...")
 if victim_model == 'BERT':
-    victim = VictimBERT(model_path, task, victim_device)
+    victim = VictimCache(model_path, VictimBERT(model_path, task, victim_device))
 elif victim_model == 'BiLSTM':
-    victim = VictimBiLSTM(model_path, task, victim_device)
+    victim = VictimCache(model_path, VictimBiLSTM(model_path, task, victim_device))
 
 # Load data
 print("Loading data...")
@@ -101,7 +110,8 @@ with no_ssl_verify():
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         attacker = OpenAttack.attackers.SCPNAttacker(device=attacker_device)
     elif attack == 'TextFooler':
-        attacker = OpenAttack.attackers.TextFoolerAttacker(token_unk=UNK_TEXT, lang='english', filter_words=filter_words)
+        attacker = OpenAttack.attackers.TextFoolerAttacker(token_unk=UNK_TEXT, lang='english',
+                                                           filter_words=filter_words)
     elif attack == 'DeepWordBug':
         attacker = OpenAttack.attackers.DeepWordBugAttacker(token_unk=UNK_TEXT)
     elif attack == 'VIPER':
@@ -124,7 +134,7 @@ print("Evaluating the attack...")
 scorer = BODEGAScore(victim_device)
 with no_ssl_verify():
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
-        scorer#, OpenAttack.metric.EditDistance()
+        scorer  # , OpenAttack.metric.EditDistance()
     ])
     start = time.time()
     summary = attack_eval.eval(dataset, visualize=True, progress_bar=False)
@@ -133,6 +143,7 @@ attack_time = end - start
 attacker = None
 
 # Remove unused stuff
+victim.finalise()
 del victim
 gc.collect()
 torch.cuda.empty_cache()
@@ -151,8 +162,8 @@ print("Success score: " + str(score_success))
 print("BERT score: " + str(score_BERT))
 print("Levenshtein score: " + str(score_Lev))
 print("BODEGA score: " + str(score_BODEGA))
-#print("Cross-encoder score: " + str(score_CE))
-#print("BODEGA2 score: " + str(score_BODEGA2))
+# print("Cross-encoder score: " + str(score_CE))
+# print("BODEGA2 score: " + str(score_BODEGA2))
 print("Queries per example: " + str(summary['Avg. Victim Model Queries']))
 print("Total attack time: " + str(attack_time))
 print("Time per example: " + str((attack_time) / len(dataset)))
@@ -165,8 +176,8 @@ if out_dir:
         f.write("BERT score: " + str(score_BERT) + '\n')
         f.write("Levenshtein score: " + str(score_Lev) + '\n')
         f.write("BODEGA score: " + str(score_BODEGA) + '\n')
-        #f.write("Cross-encoder score: " + str(score_CE) + '\n')
-        #f.write("BODEGA2 score: " + str(score_BODEGA2) + '\n')
+        # f.write("Cross-encoder score: " + str(score_CE) + '\n')
+        # f.write("BODEGA2 score: " + str(score_BODEGA2) + '\n')
         f.write("Queries per example: " + str(summary['Avg. Victim Model Queries']) + '\n')
         f.write("Total attack time: " + str(end - start) + '\n')
         f.write("Time per example: " + str((end - start) / len(dataset)) + '\n')
