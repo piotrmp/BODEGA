@@ -27,7 +27,7 @@ np.random.seed(0)
 print("Preparing the environment...")
 task = 'HN'
 targeted = False
-attack = 'BERTattack'
+attack = 'DeepWordBug'
 victim_model = 'BiLSTM'
 out_dir = None
 data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
@@ -152,7 +152,7 @@ if "TOKENIZERS_PARALLELISM" in os.environ:
 
 # Evaluate
 start = time.time()
-score_success, score_BERT, score_Lev, score_BODEGA, score_CE, score_BODEGA2 = scorer.compute()
+score_success, score_BERT, score_Lev, score_BODEGA= scorer.compute()
 end = time.time()
 evaluate_time = end - start
 
@@ -162,8 +162,6 @@ print("Success score: " + str(score_success))
 print("BERT score: " + str(score_BERT))
 print("Levenshtein score: " + str(score_Lev))
 print("BODEGA score: " + str(score_BODEGA))
-# print("Cross-encoder score: " + str(score_CE))
-# print("BODEGA2 score: " + str(score_BODEGA2))
 print("Queries per example: " + str(summary['Avg. Victim Model Queries']))
 print("Total attack time: " + str(attack_time))
 print("Time per example: " + str((attack_time) / len(dataset)))
@@ -176,8 +174,6 @@ if out_dir:
         f.write("BERT score: " + str(score_BERT) + '\n')
         f.write("Levenshtein score: " + str(score_Lev) + '\n')
         f.write("BODEGA score: " + str(score_BODEGA) + '\n')
-        # f.write("Cross-encoder score: " + str(score_CE) + '\n')
-        # f.write("BODEGA2 score: " + str(score_BODEGA2) + '\n')
         f.write("Queries per example: " + str(summary['Avg. Victim Model Queries']) + '\n')
         f.write("Total attack time: " + str(end - start) + '\n')
         f.write("Time per example: " + str((end - start) / len(dataset)) + '\n')

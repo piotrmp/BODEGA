@@ -12,10 +12,10 @@ BATCH_SIZE = 16
 class BODEGAScore(OpenAttack.AttackMetric):
     NAME = "BODEGA Score"
     
-    def __init__(self, device, with_crossencoder=False):
+    def __init__(self, device, align_sentences=False):
         self.promises = []
         self.device = device
-        self.with_crossencoder = with_crossencoder
+        self.align_sentences = align_sentences
     
     def after_attack(self, input, adversarial_sample):
         s1 = input['x']
@@ -42,19 +42,8 @@ class BODEGAScore(OpenAttack.AttackMetric):
                               model_type="microsoft/deberta-large-mnli",
                               lang="en", rescale_with_baseline=True, device=self.device, batch_size=BATCH_SIZE)
         BERT_F1 = BERT_F1.numpy()
-        if self.with_crossencoder:
-            from sentence_transformers import CrossEncoder
-            print("Computing SentenceBERT similarity...")
-            model = CrossEncoder('cross-encoder/stsb-roberta-base', device=self.device)
-            CE_scores_raw = model.predict(
-                [(str(self.normalise_for_bert(promise.s1)), str(self.normalise_for_bert(promise.s2))) for promise in
-                 self.promises])
-        else:
-            CE_scores_raw = [0] * len(self.promises)
         B_scores = []
-        B2_scores = []
         BERT_scores = []
-        CE_scores = []
         Lev_scores = []
         successes = []
         print("Computing BODEGA score...")
@@ -75,8 +64,6 @@ class BODEGAScore(OpenAttack.AttackMetric):
                     BERT_F1[i] = 0
                 BERT_scores.append(BERT_F1[i])
                 B_scores.append(BERT_F1[i] * lev_score)
-                CE_scores.append(CE_scores_raw[i])
-                B2_scores.append(CE_scores_raw[i] * lev_score)
                 successes.append(1.0)
                 if BERT_F1[i] * lev_score > 0.9:
                     print(str(i + 1))
@@ -85,6 +72,4 @@ class BODEGAScore(OpenAttack.AttackMetric):
                     print("NEW: ")
                     print(promise.s2)
         return numpy.average(numpy.array(successes)), numpy.average(numpy.array(BERT_scores)), numpy.average(
-            numpy.array(Lev_scores)), numpy.average(numpy.array(B_scores)), numpy.average(
-            numpy.array(CE_scores)), numpy.average(
-            numpy.array(B2_scores))
+            numpy.array(Lev_scores)), numpy.average(numpy.array(B_scores))
