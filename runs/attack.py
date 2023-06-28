@@ -90,7 +90,7 @@ else:
     dataset = dataset.remove_columns(["text1", "text2"])
 
 dataset = dataset.remove_columns(["fake"])
-dataset = dataset.select(range(10))
+#dataset = dataset.select(range(10))
 
 # Filter data
 if targeted:
@@ -131,7 +131,7 @@ with no_ssl_verify():
 
 # Run the attack
 print("Evaluating the attack...")
-scorer = BODEGAScore(victim_device, task, align_sentences=True)
+scorer = BODEGAScore(victim_device, task, align_sentences=False)
 with no_ssl_verify():
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
         scorer  # , OpenAttack.metric.EditDistance()

@@ -4,7 +4,6 @@ from bert_score import score
 import editdistance
 
 from metrics.ScorePromise import ScorePromise
-from lambo.segmenter.lambo import Lambo
 from OpenAttack.text_process.tokenizer.punct_tokenizer import PunctTokenizer
 
 BATCH_SIZE = 16
@@ -43,6 +42,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
     def compute(self):
         alignments = [[(promise.s1, promise.s2)] for promise in self.promises]
         if self.align_sentences:
+            from lambo.segmenter.lambo import Lambo
             print("Aligning sentences...")
             self.lambo = Lambo.get('English')
             alignments = self.align_sentences_greedy()
@@ -76,9 +76,9 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 Lev_scores.append(lev_score)
                 BERT_score = 0
                 for idx in BERT_guide[i]:
-                    print(BERT_F1_list[idx])
-                    print(BERT_sentences[idx][0])
-                    print(BERT_sentences[idx][1])
+                    #print(BERT_F1_list[idx])
+                    #print(BERT_sentences[idx][0])
+                    #print(BERT_sentences[idx][1])
                     if BERT_F1_list[idx] <= 0:
                         # BERT Score is calibrated to be *usually* between 0 and 1, but not guaranteed
                         BERT_score += 0
