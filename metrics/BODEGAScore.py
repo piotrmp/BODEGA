@@ -46,21 +46,21 @@ class BODEGAScore(OpenAttack.AttackMetric):
             print("Aligning sentences...")
             self.lambo = Lambo.get('English')
             alignments = self.align_sentences_greedy()
-        print("Computing BERT score...")
-        BERT_sentences = []
-        BERT_guide = []
+        print("Computing semantic score...")
+        SS_sentences = []
+        SS_guide = []
         for i, alignment in enumerate(alignments):
-            BERT_guide.append([])
+            SS_guide.append([])
             for sent1, sent2 in alignment:
-                BERT_guide[-1].append(len(BERT_sentences))
-                BERT_sentences.append((self.normalise_for_bert(sent1), self.normalise_for_bert(sent2)))
-        _, _, BERT_F1_list = score([pair[0] for pair in BERT_sentences], [pair[1] for pair in BERT_sentences],
+                SS_guide[-1].append(len(SS_sentences))
+                SS_sentences.append((self.normalise_for_bert(sent1), self.normalise_for_bert(sent2)))
+        _, _, SS_F1_list = score([pair[0] for pair in SS_sentences], [pair[1] for pair in SS_sentences],
                                    model_type="microsoft/deberta-large-mnli",
                                    lang="en", rescale_with_baseline=True, device=self.device, batch_size=BATCH_SIZE)
-        BERT_F1_list = BERT_F1_list.numpy()
+        SS_F1_list = SS_F1_list.numpy()
         B_scores = []
-        BERT_scores = []
-        Lev_scores = []
+        semantic_scores = []
+        character_scores = []
         successes = []
         print("Computing BODEGA score...")
         for i, promise in enumerate(self.promises):
@@ -73,22 +73,22 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 normalised_s2 = self.normalise_for_lev(promise.s2)
                 lev_dist = editdistance.eval(normalised_s1, normalised_s2)
                 lev_score = 1.0 - lev_dist / max(len(normalised_s1), len(normalised_s2))
-                Lev_scores.append(lev_score)
-                BERT_score = 0
-                for idx in BERT_guide[i]:
+                character_scores.append(lev_score)
+                semantic_score = 0
+                for idx in SS_guide[i]:
                     #print(BERT_F1_list[idx])
                     #print(BERT_sentences[idx][0])
                     #print(BERT_sentences[idx][1])
-                    if BERT_F1_list[idx] <= 0:
+                    if SS_F1_list[idx] <= 0:
                         # BERT Score is calibrated to be *usually* between 0 and 1, but not guaranteed
-                        BERT_score += 0
-                    elif BERT_F1_list[idx] >= 1:
-                        BERT_score += 1
+                        semantic_score += 0
+                    elif SS_F1_list[idx] >= 1:
+                        semantic_score += 1
                     else:
-                        BERT_score += BERT_F1_list[idx]
-                BERT_score = BERT_score / len(BERT_guide[i])
-                BERT_scores.append(BERT_score)
-                B_scores.append(BERT_score * lev_score)
+                        semantic_score += SS_F1_list[idx]
+                semantic_score = semantic_score / len(SS_guide[i])
+                semantic_scores.append(semantic_score)
+                B_scores.append(semantic_score * lev_score)
                 successes.append(1.0)
                 # Might be useful to output most succesful attacks
                 # if BERT_score * lev_score > 0.9:
@@ -97,8 +97,8 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 #    print(promise.s1)
                 #    print("NEW: ")
                 #    print(promise.s2)
-        return numpy.average(numpy.array(successes)), numpy.average(numpy.array(BERT_scores)), numpy.average(
-            numpy.array(Lev_scores)), numpy.average(numpy.array(B_scores))
+        return numpy.average(numpy.array(successes)), numpy.average(numpy.array(semantic_scores)), numpy.average(
+            numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
     
     def align_sentences_greedy(self):
         result = []

@@ -26,7 +26,7 @@ np.random.seed(0)
 # Running variables
 print("Preparing the environment...")
 task = 'PR2'
-targeted = False
+targeted = True
 attack = 'DeepWordBug'
 victim_model = 'BiLSTM'
 out_dir = None
@@ -152,15 +152,15 @@ if "TOKENIZERS_PARALLELISM" in os.environ:
 
 # Evaluate
 start = time.time()
-score_success, score_BERT, score_Lev, score_BODEGA= scorer.compute()
+score_success, score_Semantic, score_Character, score_BODEGA= scorer.compute()
 end = time.time()
 evaluate_time = end - start
 
 # Print results
 print("Subset size: " + str(len(dataset)))
 print("Success score: " + str(score_success))
-print("BERT score: " + str(score_BERT))
-print("Levenshtein score: " + str(score_Lev))
+print("BERT score: " + str(score_Semantic))
+print("Levenshtein score: " + str(score_Character))
 print("BODEGA score: " + str(score_BODEGA))
 print("Queries per example: " + str(summary['Avg. Victim Model Queries']))
 print("Total attack time: " + str(attack_time))
@@ -171,8 +171,8 @@ if out_dir:
     with open(out_dir / FILE_NAME, 'w') as f:
         f.write("Subset size: " + str(len(dataset)) + '\n')
         f.write("Success score: " + str(score_success) + '\n')
-        f.write("BERT score: " + str(score_BERT) + '\n')
-        f.write("Levenshtein score: " + str(score_Lev) + '\n')
+        f.write("BERT score: " + str(score_Semantic) + '\n')
+        f.write("Levenshtein score: " + str(score_Character) + '\n')
         f.write("BODEGA score: " + str(score_BODEGA) + '\n')
         f.write("Queries per example: " + str(summary['Avg. Victim Model Queries']) + '\n')
         f.write("Total attack time: " + str(end - start) + '\n')
