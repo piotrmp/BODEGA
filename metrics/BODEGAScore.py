@@ -1,9 +1,11 @@
 import OpenAttack
 import editdistance
-import evaluate
 import numpy
+import torch
 from OpenAttack.text_process.tokenizer.punct_tokenizer import PunctTokenizer
 from bert_score import score
+# Install via pip install git+https://github.com/lucadiliello/bleurt-pytorch.git
+from bleurt_pytorch import BleurtConfig, BleurtForSequenceClassification, BleurtTokenizer
 
 from metrics.ScorePromise import ScorePromise
 
@@ -23,7 +25,9 @@ class BODEGAScore(OpenAttack.AttackMetric):
         if semantic_scorer == "BERTscore":
             pass
         elif semantic_scorer == "BLEURT":
-            self.bleurt = evaluate.load("bleurt", "BLEURT-20", module_type="metric")
+            config = BleurtConfig.from_pretrained('lucadiliello/BLEURT-20-D12')
+            self.bleurt_model = BleurtForSequenceClassification.from_pretrained('lucadiliello/BLEURT-20').to(device)
+            self.bleurt_tokenizer = BleurtTokenizer.from_pretrained('lucadiliello/BLEURT-20')
     
     def after_attack(self, input, adversarial_sample):
         s1 = input['x']
@@ -102,16 +106,27 @@ class BODEGAScore(OpenAttack.AttackMetric):
             numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
     
     def semantic_similarity(self, SS_sentences):
+        references = [pair[0] for pair in SS_sentences]
+        modified = [pair[1] for pair in SS_sentences]
         if self.semantic_scorer == "BERTscore":
-            _, _, BERT_F1 = score([pair[0] for pair in SS_sentences], [pair[1] for pair in SS_sentences],
+            _, _, BERT_F1 = score(references, modified,
                                   model_type="microsoft/deberta-large-mnli",
                                   lang="en", rescale_with_baseline=True, device=self.device,
                                   batch_size=BATCH_SIZE)
             return BERT_F1.numpy()
         elif self.semantic_scorer == "BLEURT":
-            results = self.bleurt.compute(predictions=[pair[1] for pair in SS_sentences],
-                                          references=[pair[0] for pair in SS_sentences])['scores']
-            return numpy.array(results)
+            references_batched = [references[i:i + BATCH_SIZE] for i in range(0, len(references), BATCH_SIZE)]
+            modified_batched = [modified[i:i + BATCH_SIZE] for i in range(0, len(modified), BATCH_SIZE)]
+            result = []
+            for i in range(len(references_batched)):
+                self.bleurt_model.eval()
+                with torch.no_grad():
+                    inputs = self.bleurt_tokenizer(references_batched[i], modified_batched[i], padding='longest',
+                                                   return_tensors='pt')
+                    inputs = {key: inputs[key].to(self.device) for key in inputs}
+                    res = self.bleurt_model(**inputs).logits.flatten().to(torch.device('cpu')).tolist()
+                    result.extend(res)
+            return numpy.array(result)
     
     def align_sentences_greedy(self):
         result = []

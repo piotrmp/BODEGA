@@ -27,7 +27,7 @@ np.random.seed(0)
 print("Preparing the environment...")
 task = 'PR2'
 targeted = True
-attack = 'SCPN'
+attack = 'BERTattack'
 victim_model = 'BiLSTM'
 out_dir = None
 data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
