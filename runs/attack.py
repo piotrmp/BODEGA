@@ -27,7 +27,7 @@ np.random.seed(0)
 print("Preparing the environment...")
 task = 'PR2'
 targeted = True
-attack = 'DeepWordBug'
+attack = 'SCPN'
 victim_model = 'BiLSTM'
 out_dir = None
 data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
@@ -131,7 +131,7 @@ with no_ssl_verify():
 
 # Run the attack
 print("Evaluating the attack...")
-scorer = BODEGAScore(victim_device, task, align_sentences=False)
+scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT")
 with no_ssl_verify():
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
         scorer  # , OpenAttack.metric.EditDistance()
@@ -152,15 +152,15 @@ if "TOKENIZERS_PARALLELISM" in os.environ:
 
 # Evaluate
 start = time.time()
-score_success, score_Semantic, score_Character, score_BODEGA= scorer.compute()
+score_success, score_semantic, score_character, score_BODEGA= scorer.compute()
 end = time.time()
 evaluate_time = end - start
 
 # Print results
 print("Subset size: " + str(len(dataset)))
 print("Success score: " + str(score_success))
-print("BERT score: " + str(score_Semantic))
-print("Levenshtein score: " + str(score_Character))
+print("Semantic score: " + str(score_semantic))
+print("Character score: " + str(score_character))
 print("BODEGA score: " + str(score_BODEGA))
 print("Queries per example: " + str(summary['Avg. Victim Model Queries']))
 print("Total attack time: " + str(attack_time))
@@ -171,8 +171,8 @@ if out_dir:
     with open(out_dir / FILE_NAME, 'w') as f:
         f.write("Subset size: " + str(len(dataset)) + '\n')
         f.write("Success score: " + str(score_success) + '\n')
-        f.write("BERT score: " + str(score_Semantic) + '\n')
-        f.write("Levenshtein score: " + str(score_Character) + '\n')
+        f.write("Semantic score: " + str(score_semantic) + '\n')
+        f.write("Character score: " + str(score_character) + '\n')
         f.write("BODEGA score: " + str(score_BODEGA) + '\n')
         f.write("Queries per example: " + str(summary['Avg. Victim Model Queries']) + '\n')
         f.write("Total attack time: " + str(end - start) + '\n')

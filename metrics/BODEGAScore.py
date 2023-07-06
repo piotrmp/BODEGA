@@ -1,10 +1,11 @@
 import OpenAttack
-import numpy
-from bert_score import score
 import editdistance
+import evaluate
+import numpy
+from OpenAttack.text_process.tokenizer.punct_tokenizer import PunctTokenizer
+from bert_score import score
 
 from metrics.ScorePromise import ScorePromise
-from OpenAttack.text_process.tokenizer.punct_tokenizer import PunctTokenizer
 
 BATCH_SIZE = 16
 
@@ -12,12 +13,17 @@ BATCH_SIZE = 16
 class BODEGAScore(OpenAttack.AttackMetric):
     NAME = "BODEGA Score"
     
-    def __init__(self, device, task, align_sentences=False):
+    def __init__(self, device, task, align_sentences=False, semantic_scorer="BERTscore"):
         self.promises = []
         self.device = device
         self.task = task
         self.align_sentences = align_sentences
         self.tokenizerOA = PunctTokenizer()
+        self.semantic_scorer = semantic_scorer
+        if semantic_scorer == "BERTscore":
+            pass
+        elif semantic_scorer == "BLEURT":
+            self.bleurt = evaluate.load("bleurt", "BLEURT-20", module_type="metric")
     
     def after_attack(self, input, adversarial_sample):
         s1 = input['x']
@@ -54,10 +60,8 @@ class BODEGAScore(OpenAttack.AttackMetric):
             for sent1, sent2 in alignment:
                 SS_guide[-1].append(len(SS_sentences))
                 SS_sentences.append((self.normalise_for_bert(sent1), self.normalise_for_bert(sent2)))
-        _, _, SS_F1_list = score([pair[0] for pair in SS_sentences], [pair[1] for pair in SS_sentences],
-                                   model_type="microsoft/deberta-large-mnli",
-                                   lang="en", rescale_with_baseline=True, device=self.device, batch_size=BATCH_SIZE)
-        SS_F1_list = SS_F1_list.numpy()
+        
+        sentence_similarity = self.semantic_similarity(SS_sentences)
         B_scores = []
         semantic_scores = []
         character_scores = []
@@ -76,16 +80,13 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 character_scores.append(lev_score)
                 semantic_score = 0
                 for idx in SS_guide[i]:
-                    #print(BERT_F1_list[idx])
-                    #print(BERT_sentences[idx][0])
-                    #print(BERT_sentences[idx][1])
-                    if SS_F1_list[idx] <= 0:
-                        # BERT Score is calibrated to be *usually* between 0 and 1, but not guaranteed
+                    if sentence_similarity[idx] <= 0:
+                        # Score are calibrated to be *usually* between 0 and 1, but not guaranteed
                         semantic_score += 0
-                    elif SS_F1_list[idx] >= 1:
+                    elif sentence_similarity[idx] >= 1:
                         semantic_score += 1
                     else:
-                        semantic_score += SS_F1_list[idx]
+                        semantic_score += sentence_similarity[idx]
                 semantic_score = semantic_score / len(SS_guide[i])
                 semantic_scores.append(semantic_score)
                 B_scores.append(semantic_score * lev_score)
@@ -99,6 +100,18 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 #    print(promise.s2)
         return numpy.average(numpy.array(successes)), numpy.average(numpy.array(semantic_scores)), numpy.average(
             numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
+    
+    def semantic_similarity(self, SS_sentences):
+        if self.semantic_scorer == "BERTscore":
+            _, _, BERT_F1 = score([pair[0] for pair in SS_sentences], [pair[1] for pair in SS_sentences],
+                                  model_type="microsoft/deberta-large-mnli",
+                                  lang="en", rescale_with_baseline=True, device=self.device,
+                                  batch_size=BATCH_SIZE)
+            return BERT_F1.numpy()
+        elif self.semantic_scorer == "BLEURT":
+            results = self.bleurt.compute(predictions=[pair[1] for pair in SS_sentences],
+                                          references=[pair[0] for pair in SS_sentences])['scores']
+            return numpy.array(results)
     
     def align_sentences_greedy(self):
         result = []
@@ -141,9 +154,9 @@ class BODEGAScore(OpenAttack.AttackMetric):
         result = []
         if self.task == 'PR2':
             result = [string]
-        elif self.task== 'FC':
+        elif self.task == 'FC':
             result = string.split('~')
-        elif self.task == 'RD' or self.task =='HN':
+        elif self.task == 'RD' or self.task == 'HN':
             document = self.lambo.segment(string)
             for turn in document.turns:
                 for sentence in turn.sentences:

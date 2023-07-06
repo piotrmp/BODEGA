@@ -24,9 +24,9 @@ for task in tasks:
                     results[task + targeted + 'BODEGA'][method] = float(line.split(' ')[-1].strip())
                 elif line.startswith('Success score: '):
                     results[task + targeted + 'c_s'][method] = float(line.split(' ')[-1].strip())
-                elif line.startswith('BERT score: '):
+                elif line.startswith('Semantic score: '):
                     results[task + targeted + 'b_s'][method] = float(line.split(' ')[-1].strip())
-                elif line.startswith('Levenshtein score: '):
+                elif line.startswith('Character score: '):
                     results[task + targeted + 'l_s'][method] = float(line.split(' ')[-1].strip())
                 elif line.startswith('Queries per example: '):
                     results[task + targeted + 'q'][method] = float(line.split(' ')[-1].strip())
