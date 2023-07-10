@@ -25,7 +25,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
         if semantic_scorer == "BERTscore":
             pass
         elif semantic_scorer == "BLEURT":
-            config = BleurtConfig.from_pretrained('lucadiliello/BLEURT-20-D12')
+            config = BleurtConfig.from_pretrained('lucadiliello/BLEURT-20')
             self.bleurt_model = BleurtForSequenceClassification.from_pretrained('lucadiliello/BLEURT-20').to(device)
             self.bleurt_tokenizer = BleurtTokenizer.from_pretrained('lucadiliello/BLEURT-20')
     
