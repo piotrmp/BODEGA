@@ -121,7 +121,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
             for i in range(len(references_batched)):
                 self.bleurt_model.eval()
                 with torch.no_grad():
-                    inputs = self.bleurt_tokenizer(references_batched[i], modified_batched[i], padding='longest',
+                    inputs = self.bleurt_tokenizer(references_batched[i], modified_batched[i], padding='longest',max_length = 512, truncation = True,
                                                    return_tensors='pt')
                     inputs = {key: inputs[key].to(self.device) for key in inputs}
                     res = self.bleurt_model(**inputs).logits.flatten().to(torch.device('cpu')).tolist()

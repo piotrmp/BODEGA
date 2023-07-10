@@ -25,7 +25,7 @@ np.random.seed(0)
 
 # Running variables
 print("Preparing the environment...")
-task = 'PR2'
+task = 'FC'
 targeted = True
 attack = 'BERTattack'
 victim_model = 'BiLSTM'
