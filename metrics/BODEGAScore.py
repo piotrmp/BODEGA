@@ -95,13 +95,15 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 semantic_scores.append(semantic_score)
                 B_scores.append(semantic_score * lev_score)
                 successes.append(1.0)
-                # Might be useful to output most succesful attacks
-                # if BERT_score * lev_score > 0.9:
-                #    print(str(i + 1))
-                #    print("OLD: ")
-                #    print(promise.s1)
-                #    print("NEW: ")
-                #    print(promise.s2)
+                ## Might be useful to output most succesful attacks
+                if semantic_score * lev_score >0.8:
+                    print(str(i + 1))
+                    print("OLD: ")
+                    print(promise.s1)
+                    print("NEW: ")
+                    print(promise.s2)
+                else:
+                    print(semantic_score * lev_score)
         return numpy.average(numpy.array(successes)), numpy.average(numpy.array(semantic_scores)), numpy.average(
             numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
     
