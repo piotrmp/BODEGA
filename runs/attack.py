@@ -25,7 +25,7 @@ np.random.seed(0)
 
 # Running variables
 print("Preparing the environment...")
-task = 'HN'
+task = 'PR2'
 targeted = True
 attack = 'BERTattack'
 victim_model = 'BiLSTM'
@@ -131,7 +131,9 @@ with no_ssl_verify():
 
 # Run the attack
 print("Evaluating the attack...")
-scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT")
+RAW_FILE_NAME = 'raw_' + task + '_' + str(targeted) + '_' + attack + '_' + victim_model + '.tsv'
+raw_path = out_dir / RAW_FILE_NAME if out_dir else None
+scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT", raw_path = raw_path)
 with no_ssl_verify():
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
         scorer  # , OpenAttack.metric.EditDistance()

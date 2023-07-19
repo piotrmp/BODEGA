@@ -16,7 +16,7 @@ BATCH_SIZE = 16
 class BODEGAScore(OpenAttack.AttackMetric):
     NAME = "BODEGA Score"
     
-    def __init__(self, device, task, align_sentences=False, semantic_scorer="BERTscore"):
+    def __init__(self, device, task, align_sentences=False, semantic_scorer="BERTscore", raw_path = None):
         self.promises = []
         self.device = device
         self.task = task
@@ -29,6 +29,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
             config = BleurtConfig.from_pretrained('lucadiliello/BLEURT-20')
             self.bleurt_model = BleurtForSequenceClassification.from_pretrained('lucadiliello/BLEURT-20').to(device)
             self.bleurt_tokenizer = BleurtTokenizer.from_pretrained('lucadiliello/BLEURT-20')
+        self.raw_path = raw_path
     
     def after_attack(self, input, adversarial_sample):
         s1 = input['x']
@@ -72,6 +73,8 @@ class BODEGAScore(OpenAttack.AttackMetric):
         character_scores = []
         successes = []
         print("Computing BODEGA score...")
+        if self.raw_path:
+            f = open(self.raw_path, "w")
         for i, promise in enumerate(self.promises):
             if promise.s2 is None:
                 # This happens if attacker gives no output or an output that doesn't succeed in changing the decision
@@ -97,11 +100,14 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 B_scores.append(semantic_score * lev_score)
                 successes.append(1.0)
                 ## Might be useful to output most succesful attacks
-                self.print_example(semantic_score * lev_score, promise)
+                if self.raw_path:
+                    self.print_example(semantic_score * lev_score, promise, f)
+        if self.raw_path:
+            f.close()
         return numpy.average(numpy.array(successes)), numpy.average(numpy.array(semantic_scores)), numpy.average(
             numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
     
-    def print_example(self, score, promise):
+    def print_example(self, score, promise, f):
         diffs = difflib.ndiff(self.normalise_for_bert(promise.s1).lower(), self.normalise_for_bert(promise.s2).lower())
         old = ''
         new = ''
@@ -115,7 +121,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 new += '<' + diff[-1] + '>'
         old = old.replace('><', '')
         new = new.replace('><', '')
-        print(str(score)+'\t'+old + '\t'+new)
+        f.write(str(score)+'\t'+old + '\t'+new+'\n')
     
     def semantic_similarity(self, SS_sentences):
         references = [pair[0] for pair in SS_sentences]
