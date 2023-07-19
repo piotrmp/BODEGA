@@ -6,6 +6,7 @@ from OpenAttack.text_process.tokenizer.punct_tokenizer import PunctTokenizer
 from bert_score import score
 # Install via pip install git+https://github.com/lucadiliello/bleurt-pytorch.git
 from bleurt_pytorch import BleurtConfig, BleurtForSequenceClassification, BleurtTokenizer
+import difflib
 
 from metrics.ScorePromise import ScorePromise
 
@@ -96,16 +97,25 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 B_scores.append(semantic_score * lev_score)
                 successes.append(1.0)
                 ## Might be useful to output most succesful attacks
-                if semantic_score * lev_score >0.8:
-                    print(str(i + 1))
-                    print("OLD: ")
-                    print(promise.s1)
-                    print("NEW: ")
-                    print(promise.s2)
-                else:
-                    print(semantic_score * lev_score)
+                self.print_example(semantic_score * lev_score, promise)
         return numpy.average(numpy.array(successes)), numpy.average(numpy.array(semantic_scores)), numpy.average(
             numpy.array(character_scores)), numpy.average(numpy.array(B_scores))
+    
+    def print_example(self, score, promise):
+        diffs = difflib.ndiff(self.normalise_for_bert(promise.s1).lower(), self.normalise_for_bert(promise.s2).lower())
+        old = ''
+        new = ''
+        for i, diff in enumerate(diffs):
+            if diff[0] == ' ':
+                old += diff[-1]
+                new += diff[-1]
+            elif diff[0] == '-':
+                old += '<' + diff[-1] + '>'
+            elif diff[0] == '+':
+                new += '<' + diff[-1] + '>'
+        old = old.replace('><', '')
+        new = new.replace('><', '')
+        print(str(score)+'\t'+old + '\t'+new)
     
     def semantic_similarity(self, SS_sentences):
         references = [pair[0] for pair in SS_sentences]
@@ -123,7 +133,8 @@ class BODEGAScore(OpenAttack.AttackMetric):
             for i in range(len(references_batched)):
                 self.bleurt_model.eval()
                 with torch.no_grad():
-                    inputs = self.bleurt_tokenizer(references_batched[i], modified_batched[i], padding='longest',max_length = 512, truncation = True,
+                    inputs = self.bleurt_tokenizer(references_batched[i], modified_batched[i], padding='longest',
+                                                   max_length=512, truncation=True,
                                                    return_tensors='pt')
                     inputs = {key: inputs[key].to(self.device) for key in inputs}
                     res = self.bleurt_model(**inputs).logits.flatten().to(torch.device('cpu')).tolist()
