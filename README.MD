@@ -30,12 +30,19 @@ You may wish to install the OpenAttack dependencies separately (including numpy,
 pytorch). Note that some of the attack implementations will require additional packages -- for more information see
 [OpenAttack website](https://openattack.readthedocs.io/en/latest/quickstart/installation.html).
 
-Additionally, you will need [editdistance](https://github.com/roy-ht/editdistance) and
-[BERTScore](https://github.com/Tiiiger/bert_score):
+Additionally, you will need [editdistance](https://github.com/roy-ht/editdistance),
+[BERTScore](https://github.com/Tiiiger/bert_score) and [bleurt-pytorch](https://github.com/lucadiliello/bleurt-pytorch):
 ```commandline
 pip install editdistance
 pip install bert-score
+pip install git+https://github.com/lucadiliello/bleurt-pytorch.git
 ```
+Finally, to perform per-sentence similarity computation, you will need [LAMBO](https://gitlab.clarin-pl.eu/syntactic-tools/lambo) segmenter:
+```commandline
+git clone https://gitlab.clarin-pl.eu/syntactic-tools/lambo.git
+pip install ./lambo
+```
+
 Now you can clone this repository and start working with BODEGA.
 
 ## Usage
