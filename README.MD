@@ -18,6 +18,9 @@ involving common adversarial example generation strategies and classifiers commo
 The research was done within the [ERINIA](https://www.upf.edu/web/erinia) project realised at the
 [TALN lab](https://www.upf.edu/web/taln/) of [Universitat Pompeu Fabra](https://www.upf.edu).
 
+*NOTE*: The framework has been evolving since the publication of the article preprint. I you need to replicate the
+experiments reported there, please ask us for advice.
+
 ## Installation
 
 In order to use BODEGA, you will first need to install [OpenAttack](https://openattack.readthedocs.io/):

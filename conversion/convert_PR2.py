@@ -39,6 +39,12 @@ for line in open(corpus_path / 'train-task1-SI.labels'):
             sent_desc = (article_id, begin, end, sentence)
             noprop_sentences.discard(sent_desc)
             prop_sentences.add(sent_desc)
+
+prop_sentences = list(prop_sentences)
+prop_sentences.sort()
+noprop_sentences = list(noprop_sentences)
+noprop_sentences.sort()
+
 for label, sentences in [('1', prop_sentences), ('0', noprop_sentences)]:
     for sentence in sentences:
         source = 'SemEval2020T11-' + sentence[0]
