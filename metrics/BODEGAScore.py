@@ -193,7 +193,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
             result = [string]
         elif self.task == 'FC':
             result = string.split('~')
-        elif self.task == 'RD' or self.task == 'HN':
+        elif self.task == 'RD' or self.task == 'HN' or self.task == 'C19':
             document = self.lambo.segment(string)
             for turn in document.turns:
                 for sentence in turn.sentences:

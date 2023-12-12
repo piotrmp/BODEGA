@@ -1,8 +1,8 @@
 import pathlib
 
 victim = 'BERT'
-task_dict = {'HN': 'HN', 'PR': 'PR2', 'FC': 'FC', 'RD': 'RD'}
-tasks = ['HN', 'PR', 'FC', 'RD']
+task_dict = {'HN': 'HN', 'PR': 'PR2', 'FC': 'FC', 'RD': 'RD', 'C19': 'C19'}
+tasks = ['HN', 'PR', 'FC', 'RD', 'C19']
 method_dict = {'BAE': 'BAE', 'BERT-ATTACK': 'BERTattack', 'DeepWordBug': 'DeepWordBug', 'Genetic': 'Genetic',
                'SememePSO': 'PSO', 'PWWS': 'PWWS', 'SCPN': 'SCPN', 'TextFooler': 'TextFooler'}
 methods = ['BAE', 'BERT-ATTACK', 'DeepWordBug', 'Genetic', 'SememePSO', 'PWWS', 'SCPN', 'TextFooler']

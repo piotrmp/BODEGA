@@ -138,7 +138,7 @@ def train_loop(model, train_dataloader, device, optimizer, lr_scheduler, skip_vi
 
 
 def train_and_save(data_path, out_path, device, task, skip_visual=False):
-    with_pairs = (task == 'FC')
+    with_pairs = (task == 'FC' or task == 'C19')
     train_dataloader, eval_dataloader = prepare_dataloaders_training(data_path, with_pairs=with_pairs)
     
     model = AutoModelForSequenceClassification.from_pretrained(pretrained_model, num_labels=2)
@@ -169,11 +169,11 @@ class VictimBERT(OpenAttack.Classifier):
         self.device = device
         config = AutoConfig.from_pretrained(pretrained_model)
         self.model = AutoModelForSequenceClassification.from_config(config)
-        self.model.load_state_dict(torch.load(path))
+        self.model.load_state_dict(torch.load(path), strict=False)
         self.model.to(device)
         self.model.eval()
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model)
-        self.with_pairs = (task == 'FC')
+        self.with_pairs = (task == 'FC' or task == 'C19')
     
     def get_pred(self, input_):
         return self.get_prob(input_).argmax(axis=1)

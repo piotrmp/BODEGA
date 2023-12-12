@@ -49,7 +49,7 @@ if out_dir and (out_dir / FILE_NAME).exists():
     sys.exit()
 
 # Prepare task data
-with_pairs = (task == 'FC')
+with_pairs = (task == 'FC' or task == 'C19')
 
 # Choose device
 print("Setting up the device...")
@@ -90,7 +90,7 @@ else:
     dataset = dataset.remove_columns(["text1", "text2"])
 
 dataset = dataset.remove_columns(["fake"])
-#dataset = dataset.select(range(10))
+# dataset = dataset.select(range(10))
 
 # Filter data
 if targeted:
@@ -133,7 +133,7 @@ with no_ssl_verify():
 print("Evaluating the attack...")
 RAW_FILE_NAME = 'raw_' + task + '_' + str(targeted) + '_' + attack + '_' + victim_model + '.tsv'
 raw_path = out_dir / RAW_FILE_NAME if out_dir else None
-scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT", raw_path = raw_path)
+scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT", raw_path=raw_path)
 with no_ssl_verify():
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
         scorer  # , OpenAttack.metric.EditDistance()
@@ -154,7 +154,7 @@ if "TOKENIZERS_PARALLELISM" in os.environ:
 
 # Evaluate
 start = time.time()
-score_success, score_semantic, score_character, score_BODEGA= scorer.compute()
+score_success, score_semantic, score_character, score_BODEGA = scorer.compute()
 end = time.time()
 evaluate_time = end - start
 

@@ -95,7 +95,7 @@ class BiLSTM(Module):
 
 
 def train_and_save(data_path, out_path, device, task, skip_visual=False):
-    with_pairs = (task == 'FC')
+    with_pairs = (task == 'FC' or task == 'C19')
     train_dataloader, eval_dataloader = prepare_dataloaders_training(data_path, with_pairs=with_pairs, just_codes=True)
     
     tokenizer = AutoTokenizer.from_pretrained(TOKENISER_MODEL)
@@ -124,7 +124,7 @@ class VictimBiLSTM(OpenAttack.Classifier):
         self.model.load_state_dict(torch.load(path))
         self.model.to(device)
         self.model.eval()
-        self.with_pairs = (task == 'FC')
+        self.with_pairs = (task == 'FC' or task == 'C19')
     
     def get_pred(self, input_):
         return self.get_prob(input_).argmax(axis=1)
