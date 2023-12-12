@@ -16,7 +16,7 @@ BATCH_SIZE = 16
 class BODEGAScore(OpenAttack.AttackMetric):
     NAME = "BODEGA Score"
     
-    def __init__(self, device, task, align_sentences=False, semantic_scorer="BERTscore", raw_path = None):
+    def __init__(self, device, task, align_sentences=False, semantic_scorer="BERTscore", raw_path=None):
         self.promises = []
         self.device = device
         self.task = task
@@ -121,7 +121,7 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 new += '<' + diff[-1] + '>'
         old = old.replace('><', '')
         new = new.replace('><', '')
-        f.write(str(score)+'\t'+old + '\t'+new+'\n')
+        f.write(str(score) + '\t' + old + '\t' + new + '\n')
     
     def semantic_similarity(self, SS_sentences):
         references = [pair[0] for pair in SS_sentences]
@@ -161,9 +161,12 @@ class BODEGAScore(OpenAttack.AttackMetric):
                 best_sentence2 = None
                 best_distance = len(promise.s1) + len(promise.s2) + 10
                 for sentence2 in doc2_sentences:
-                    lev_dist = editdistance.eval(self.normalise_for_lev(sentence1),
-                                                 self.normalise_for_lev(sentence2)) / max(
-                        len(self.normalise_for_lev(sentence1)), len(self.normalise_for_lev(sentence2)))
+                    normalised1 = self.normalise_for_lev(sentence1)
+                    normalised2 = self.normalise_for_lev(sentence2)
+                    if len(normalised1) == 0 and len(normalised2) == 0:
+                        lev_dist = 0
+                    else:
+                        lev_dist = editdistance.eval(normalised1, normalised2) / max(len(normalised1), len(normalised2))
                     if lev_dist < best_distance:
                         best_distance = lev_dist
                         best_sentence2 = sentence2
