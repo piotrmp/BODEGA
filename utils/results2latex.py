@@ -1,8 +1,8 @@
 import pathlib
 
 victim = 'BERT'
-task_dict = {'HN': 'HN', 'PR': 'PR2', 'FC': 'FC', 'RD': 'RD', 'C19': 'C19'}
-tasks = ['HN', 'PR', 'FC', 'RD', 'C19']
+task_dict = {'HN': 'HN', 'PR': 'PR2', 'FC': 'FC', 'RD': 'RD'}#, 'C19': 'C19'}
+tasks = ['HN', 'PR', 'FC', 'RD']#, 'C19']
 method_dict = {'BAE': 'BAE', 'BERT-ATTACK': 'BERTattack', 'DeepWordBug': 'DeepWordBug', 'Genetic': 'Genetic',
                'SememePSO': 'PSO', 'PWWS': 'PWWS', 'SCPN': 'SCPN', 'TextFooler': 'TextFooler'}
 methods = ['BAE', 'BERT-ATTACK', 'DeepWordBug', 'Genetic', 'SememePSO', 'PWWS', 'SCPN', 'TextFooler']
@@ -30,7 +30,7 @@ for task in tasks:
                     results[task + targeted + 'l_s'][method] = float(line.split(' ')[-1].strip())
                 elif line.startswith('Queries per example: '):
                     results[task + targeted + 'q'][method] = float(line.split(' ')[-1].strip())
-
+# Full LaTeX printing
 for task in tasks:
     for method in methods:
         taskI = task if method == methods[0] else ''
@@ -43,3 +43,10 @@ for task in tasks:
                 print(" & {0}{{{1:.2f}}}".format(prefix, value), end='')
         print(' \\\\')
     print('    \\hline')
+
+#Simplified printing
+for task in tasks:
+    for targeted in ['False', 'True']:
+        for measure in ['BODEGA', 'c_s', 'b_s', 'l_s', 'q']:
+            value = results[task + targeted + measure]['DeepWordBug']
+            print(value)
