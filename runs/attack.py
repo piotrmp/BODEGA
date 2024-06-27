@@ -6,6 +6,8 @@ import time
 import random
 import numpy as np
 
+import victims.surprise
+
 import OpenAttack
 import torch
 from datasets import Dataset
@@ -13,7 +15,9 @@ from datasets import Dataset
 from metrics.BODEGAScore import BODEGAScore
 from utils.data_mappings import dataset_mapping, dataset_mapping_pairs, SEPARATOR_CHAR
 from utils.no_ssl_verify import no_ssl_verify
-from victims.bert import VictimBERT, readfromfile_generator
+from victims.surprise import VictimRoBERTa
+from victims.transformer import VictimTransformer, readfromfile_generator, PRETRAINED_BERT, PRETRAINED_GEMMA_2B, \
+    PRETRAINED_GEMMA_7B
 from victims.bilstm import VictimBiLSTM
 from victims.caching import VictimCache
 from victims.unk_fix_wrapper import UNK_TEXT
@@ -28,7 +32,7 @@ print("Preparing the environment...")
 task = 'PR2'
 targeted = True
 attack = 'BERTattack'
-victim_model = 'BiLSTM'
+victim_model = 'GEMMA'
 out_dir = None
 data_path = pathlib.Path.home() / 'data' / 'BODEGA' / task
 model_path = pathlib.Path.home() / 'data' / 'BODEGA' / task / (victim_model + '-512.pth')
@@ -63,24 +67,34 @@ if using_TF:
 if torch.cuda.is_available():
     victim_device = torch.device("cuda")
     attacker_device = torch.device("cuda")
-# elif torch.backends.mps.is_available():
-#    victim_device = torch.device('mps') if victim_model!= 'BiLSTM' else torch.device('cpu')
-#    attacker_device = torch.device('mps') if attack!= 'BERTattack' else torch.device('cpu')
 else:
     victim_device = torch.device("cpu")
     attacker_device = torch.device('cpu')
 
 # Prepare victim
 print("Loading up victim model...")
+pretrained_model = None
 if victim_model == 'BERT':
-    victim = VictimCache(model_path, VictimBERT(model_path, task, victim_device))
+    pretrained_model = PRETRAINED_BERT
+    victim = VictimCache(model_path, VictimTransformer(model_path, task, pretrained_model, False, victim_device))
+elif victim_model == 'GEMMA':
+    pretrained_model = PRETRAINED_GEMMA_2B
+    victim = VictimCache(model_path, VictimTransformer(model_path, task, pretrained_model, True, victim_device))
+elif victim_model == 'GEMMA7B':
+    pretrained_model = PRETRAINED_GEMMA_7B
+    victim = VictimCache(model_path, VictimTransformer(model_path, task, pretrained_model, True, victim_device))
 elif victim_model == 'BiLSTM':
+    pretrained_model = PRETRAINED_BERT
     victim = VictimCache(model_path, VictimBiLSTM(model_path, task, victim_device))
+elif victim_model == 'surprise':
+    pretrained_model = victims.surprise.pretrained_model
+    victim = VictimCache(model_path, VictimRoBERTa(model_path, task, victim_device))
 
 # Load data
 print("Loading data...")
 test_dataset = Dataset.from_generator(readfromfile_generator,
-                                      gen_kwargs={'subset': 'attack', 'dir': data_path, 'trim_text': True,
+                                      gen_kwargs={'subset': 'attack', 'dir': data_path,
+                                                  'pretrained_model': pretrained_model, 'trim_text': True,
                                                   'with_pairs': with_pairs})
 if not with_pairs:
     dataset = test_dataset.map(function=dataset_mapping)
@@ -133,8 +147,8 @@ with no_ssl_verify():
 print("Evaluating the attack...")
 RAW_FILE_NAME = 'raw_' + task + '_' + str(targeted) + '_' + attack + '_' + victim_model + '.tsv'
 raw_path = out_dir / RAW_FILE_NAME if out_dir else None
-scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT", raw_path=raw_path)
 with no_ssl_verify():
+    scorer = BODEGAScore(victim_device, task, align_sentences=True, semantic_scorer="BLEURT", raw_path=raw_path)
     attack_eval = OpenAttack.AttackEval(attacker, victim, language='english', metrics=[
         scorer  # , OpenAttack.metric.EditDistance()
     ])

@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 from transformers import AutoTokenizer
 
 from utils.data_mappings import SEPARATOR
-from victims.bert import prepare_dataloaders_training, MAX_LEN
+from victims.transformer import prepare_dataloaders_training, MAX_LEN
 
 MAX_BATCHES = -1
 BATCH_SIZE = 32

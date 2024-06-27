@@ -3,58 +3,94 @@
 This repository contains the BODEGA benchmark for evaluating the robustness of text classifiers, i.e. their ability to
 maintain the correct prediction for test examples that were modified by a malicious attacker. BODEGA is using tasks
 related to the detection of misinformation and aims to simulate the real usecase of social media platforms
-employing ML classifiers for content filtering. The currently included tasks (with IDs) are:
+employing ML classifiers for content filtering. The basic tasks (with IDs) are:
 
 - Style-based news bias assessment (HN),
 - Propaganda detection (PR2),
 - Fact checking (FC),
 - Rumour detection (RD).
 
-The full description of the benchmark is available in the article preprint on arXiv ([BODEGA: Benchmark for Adversarial
-Example Generation in Credibility Assessment](https://arxiv.org/abs/2303.08032)). Apart from background information
+The victim classifiers include:
+
+- BiLSTM
+- fine-tuned BERT.
+
+The full description of the benchmark is available in the article preprint on
+arXiv ([Verifying the Robustness of Automatic Credibility Assessment](https://arxiv.org/abs/2303.08032)). Apart from
+background information
 (related work, motivation, description of the tasks, explanation of evaluation), it includes the results of attacks
 involving common adversarial example generation strategies and classifiers commonly used in misinformation detection.
 
+---
+**UPDATE 27.06.2024**: Extending beyond the current arXiv preprint, the repository also includes:
+
+- two additional victim models based on fine-tuned [Gemma](https://huggingface.co/docs/transformers/model_doc/gemma)
+  model in the 2-billion and 7-billion version. These are configured to run
+  through [QLoRA](https://proceedings.neurips.cc/paper_files/paper/2023/file/1feb87871436031bdc0f2beaa62a049b-Paper-Conference.pdf)
+  on CUDA GPU.
+- an additional task of detecting COVID-19 misinformation (C19) and a 'surprise' classifier based on adversarially-tuned
+  RoBERTa. Both were prepared for the
+  [Task 6: Robustness of Credibility Assessment with Adversarial Examples (InCrediblAE)](https://checkthat.gitlab.io/clef2024/task6/)
+  shared task at
+  [CheckThat! 2024](https://checkthat.gitlab.io/clef2024/) lab at CLEF-2024. The files for all the tasks and victims
+  involved in
+  this event are available at
+  the [lab repository](https://gitlab.com/checkthat_lab/clef2024-checkthat-lab/-/tree/main/task6?ref_type=heads).
+
 The research was done within the [ERINIA](https://www.upf.edu/web/erinia) project realised at the
 [TALN lab](https://www.upf.edu/web/taln/) of [Universitat Pompeu Fabra](https://www.upf.edu).
-
-*NOTE*: The framework has been evolving since the publication of the article preprint. I you need to replicate the
-experiments reported there, please ask us for advice.
+---
 
 ## Installation
 
-In order to use BODEGA, you will first need to install [OpenAttack](https://openattack.readthedocs.io/):
+In order to use BODEGA, you will first need to prepare an environment with *python 3.10* and
+install [HuggingFace transformers](https://huggingface.co/docs/transformers/index)
+with [OpenAttack](https://openattack.readthedocs.io/):
 
 ```commandline
+pip install "transformers==4.38.1"
 pip install OpenAttack
 ```
 
-You may wish to install the OpenAttack dependencies separately (including numpy, huggingface transformers, nltk and
+You may wish to install the OpenAttack dependencies separately (including numpy, nltk and
 pytorch). Note that some of the attack implementations will require additional packages -- for more information see
 [OpenAttack website](https://openattack.readthedocs.io/en/latest/quickstart/installation.html).
 
 Additionally, you will need [editdistance](https://github.com/roy-ht/editdistance),
 [BERTScore](https://github.com/Tiiiger/bert_score) and [bleurt-pytorch](https://github.com/lucadiliello/bleurt-pytorch):
+
 ```commandline
 pip install editdistance
 pip install bert-score
 pip install git+https://github.com/lucadiliello/bleurt-pytorch.git
 ```
-Finally, to perform per-sentence similarity computation, you will need [LAMBO](https://gitlab.clarin-pl.eu/syntactic-tools/lambo) segmenter:
+
+To perform per-sentence similarity computation, you will
+need [LAMBO](https://gitlab.clarin-pl.eu/syntactic-tools/lambo) segmenter:
+
 ```commandline
 git clone https://gitlab.clarin-pl.eu/syntactic-tools/lambo.git
 pip install ./lambo
+```
+
+Gemma victim models also require several packages for efficient training (if your machine lacks GPU, you will not be
+able to install `bitsandbytes` and the Gemma victims will not work correctly) :
+
+```commandline
+pip install peft bitsandbytes accelerate
 ```
 
 Now you can clone this repository and start working with BODEGA.
 
 ## Usage
 
-Performing evaluation with BODEGA requires the following steps:
+Performing evaluation with BODEGA requires several steps. Note that you can skip points 1-3 by downloading the resources
+from the [repository](https://gitlab.com/checkthat_lab/clef2024-checkthat-lab/-/tree/main/task6?ref_type=heads) of
+the [InCrediblAE shared task](https://checkthat.gitlab.io/clef2024/task6/).
 
 ### 1. Obtaining the source corpora
 
-All the source corpora are available to download on open licences. Specifically, the tasks included rely on the
+All the basic corpora are available to download on open licences. Specifically, the tasks included rely on the
 following datasets:
 
 - News bias
@@ -93,8 +129,8 @@ python ./conversion/convert_PR2.py ~/Downloads/BODEGA/datasets ~/Downloads/BODEG
 Training victim classifiers is done using the `runs/train_victims.py` script. You need to provide the following
 arguments:
 
-- task ID (`HN`, `PR2`, `FC` or `RD`),
-- classifier type (`BiLSTM` or `BERT`),
+- task ID (`HN`, `PR2`, `FC`, `RD` or `C19`),
+- classifier type (`BiLSTM`, `BERT`, `GEMMA2B` or `GEMMA7B`),
 - path to the folder containing the TSV files with training data,
 - path to the output file with the trained model.
 
@@ -104,16 +140,18 @@ For example, training the BiLSTM classifier for the PR2 data can be done in the 
 python ./runs/train_victims.py PR2 BiLSTM ~/Downloads/BODEGA ~/Downloads/BODEGA/bilstm.pth
 ```
 
+The code for training the surprise classifier is not available here.
+
 ### 4. Testing the attack performance
 
 Running the attack and measuring its success is done through the `runs/attack.py` script. You need to provide the
 following arguments:
 
-- task ID (`HN`, `PR2`, `FC` or `RD`),
+- task ID (`HN`, `PR2`, `FC`, `RD` or `C19`),
 - indication if the attack is targeted (`true` or `false`),
 - attacker procedure (`PWWS`, `SCPN`, `TextFooler`, `DeepWordBug`, `GAN`, `Genetic`, `PSO`, `BERTattack` and
   `BAE` are currently supported)
-- victim type (`BiLSTM` or `BERT`),
+- victim type (`BiLSTM`, `BERT`, `GEMMA2B`, `GEMMA7B` or `surprise`),
 - path to the folder containing the TSV files with training data,
 - victim model path.
 
