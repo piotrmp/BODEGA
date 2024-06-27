@@ -36,10 +36,10 @@ involving common adversarial example generation strategies and classifiers commo
   involved in
   this event are available at
   the [lab repository](https://gitlab.com/checkthat_lab/clef2024-checkthat-lab/-/tree/main/task6?ref_type=heads).
+---
 
 The research was done within the [ERINIA](https://www.upf.edu/web/erinia) project realised at the
 [TALN lab](https://www.upf.edu/web/taln/) of [Universitat Pompeu Fabra](https://www.upf.edu).
----
 
 ## Installation
 
