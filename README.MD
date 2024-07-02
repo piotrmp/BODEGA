@@ -43,8 +43,15 @@ The research was done within the [ERINIA](https://www.upf.edu/web/erinia) projec
 
 ## Installation
 
-In order to use BODEGA, you will first need to prepare an environment with *python 3.10* and
-install [HuggingFace transformers](https://huggingface.co/docs/transformers/index)
+In order to use BODEGA, you will first need to prepare an environment with *python 3.10* and pyTorch, likely including GPU support.
+For example, in CONDA you can do the follwing:
+```commandline
+conda create bodega
+conda activate bodega
+conda install python=3.10
+conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
+```
+Then, install [HuggingFace transformers](https://huggingface.co/docs/transformers/index)
 with [OpenAttack](https://openattack.readthedocs.io/):
 
 ```commandline
