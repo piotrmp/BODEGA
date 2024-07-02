@@ -69,8 +69,7 @@ To perform per-sentence similarity computation, you will
 need [LAMBO](https://gitlab.clarin-pl.eu/syntactic-tools/lambo) segmenter:
 
 ```commandline
-git clone https://gitlab.clarin-pl.eu/syntactic-tools/lambo.git
-pip install ./lambo
+pip install git+https://gitlab.clarin-pl.eu/syntactic-tools/lambo.git
 ```
 
 Gemma victim models also require several packages for efficient training (if your machine lacks GPU, you will not be
