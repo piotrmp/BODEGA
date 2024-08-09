@@ -35,7 +35,7 @@ involving common adversarial example generation strategies and classifiers commo
   [CheckThat! 2024](https://checkthat.gitlab.io/clef2024/) lab at CLEF-2024. The files for all the tasks and victims
   involved in
   this event are available at
-  the [lab repository](https://gitlab.com/checkthat_lab/clef2024-checkthat-lab/-/tree/main/task6?ref_type=heads).
+  the [lab repository](https://gitlab.com/checkthat_lab/clef2024-checkthat-lab/-/tree/main/task6?ref_type=heads) and more information on the task can be found in the [overview article](https://ceur-ws.org/Vol-3740/paper-28.pdf).
 ---
 
 The research was done within the [ERINIA](https://www.upf.edu/web/erinia) project realised at the
