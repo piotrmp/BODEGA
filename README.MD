@@ -15,14 +15,13 @@ The victim classifiers include:
 - BiLSTM
 - fine-tuned BERT.
 
-The full description of the benchmark is available in the article preprint on
-arXiv ([Verifying the Robustness of Automatic Credibility Assessment](https://arxiv.org/abs/2303.08032)). Apart from
+The full description of the benchmark is available in the article published in the NLP journal ([Verifying the Robustness of Automatic Credibility Assessment](https://doi.org/10.1017/nlp.2024.54)). Apart from
 background information
 (related work, motivation, description of the tasks, explanation of evaluation), it includes the results of attacks
 involving common adversarial example generation strategies and classifiers commonly used in misinformation detection.
 
 ---
-**UPDATE 27.06.2024**: Extending beyond the current arXiv preprint, the repository also includes:
+**UPDATE 27.06.2024**: The repository now also includes:
 
 - two additional victim models based on fine-tuned [Gemma](https://huggingface.co/docs/transformers/model_doc/gemma)
   model in the 2-billion and 7-billion version. These are configured to run
