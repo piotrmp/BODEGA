@@ -96,7 +96,7 @@ class BiLSTM(Module):
 
 def train_and_save(data_path, out_path, device, task, skip_visual=False):
     with_pairs = (task == 'FC' or task == 'C19')
-    train_dataloader, eval_dataloader = prepare_dataloaders_training(data_path, with_pairs=with_pairs, just_codes=True)
+    train_dataloader, eval_dataloader = prepare_dataloaders_training(data_path, TOKENISER_MODEL,with_pairs=with_pairs, just_codes=True)
     
     tokenizer = AutoTokenizer.from_pretrained(TOKENISER_MODEL)
     model = BiLSTM(tokenizer)
