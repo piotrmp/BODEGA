@@ -35,7 +35,7 @@ def train_loop(dataloader, model, optimizer, device, skip_visual=False):
     print('Train loss: ' + str(numpy.mean(losses)))
 
 
-def eval_loop(dataloader, model, device, skip_visual=False):
+def eval_loop(dataloader, model, device, skip_visual=False, print_path=None):
     print("Evaluating...")
     model.eval()
     progress_bar = tqdm(range(len(dataloader)), ascii=True, disable=skip_visual)
@@ -44,12 +44,15 @@ def eval_loop(dataloader, model, device, skip_visual=False):
     TPs = 0
     FPs = 0
     FNs = 0
+    all_preds = []
     with torch.no_grad():
         for i, XY in enumerate(dataloader):
             X = XY['input_ids'].to(device)
             Y = XY['labels']
             pred = model.postprocessing(model(X))
             Y = Y.to(torch.device('cpu')).numpy()
+            if print_path:
+                all_preds.extend(pred.tolist())
             eq = numpy.equal(Y, pred)
             size += len(eq)
             correct += sum(eq)
@@ -61,6 +64,10 @@ def eval_loop(dataloader, model, device, skip_visual=False):
                 break
     print('Accuracy: ' + str(correct / size))
     print('F1: ' + str(2 * TPs / (2 * TPs + FPs + FNs)))
+    if print_path:
+        with open(print_path, 'w') as f:
+            for pred in all_preds:
+                f.write(str(pred)+'\n')
 
 
 class BiLSTM(Module):

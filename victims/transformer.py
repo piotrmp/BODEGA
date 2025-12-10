@@ -103,7 +103,7 @@ def prepare_dataloaders_training(dir, pretrained_model, with_pairs=False, just_c
     return train_dataloader, eval_dataloader
 
 
-def eval_loop(model, eval_dataloader, device, skip_visual=False):
+def eval_loop(model, eval_dataloader, device, skip_visual=False, print_path=None):
     print("Evaluating...")
     model.eval()
     progress_bar = tqdm(range(len(eval_dataloader)), ascii=True, disable=skip_visual)
@@ -112,6 +112,7 @@ def eval_loop(model, eval_dataloader, device, skip_visual=False):
     TPs = 0
     FPs = 0
     FNs = 0
+    all_preds = []
     for i, batch in enumerate(eval_dataloader):
         batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
@@ -120,6 +121,8 @@ def eval_loop(model, eval_dataloader, device, skip_visual=False):
         logits = outputs.logits
         pred = torch.argmax(logits, dim=-1).detach().to(torch.device('cpu')).numpy()
         Y = batch["labels"].to(torch.device('cpu')).numpy()
+        if print_path:
+            all_preds.extend(pred.tolist())
         eq = numpy.equal(Y, pred)
         size += len(eq)
         correct += sum(eq)
@@ -131,6 +134,10 @@ def eval_loop(model, eval_dataloader, device, skip_visual=False):
             break
     print('Accuracy: ' + str(correct / size))
     print('F1: ' + str(2 * TPs / (2 * TPs + FPs + FNs)))
+    if print_path:
+        with open(print_path, 'w') as f:
+            for pred in all_preds:
+                f.write(str(pred)+'\n')
 
 
 def train_loop(model, train_dataloader, device, optimizer, lr_scheduler, skip_visual=False):
